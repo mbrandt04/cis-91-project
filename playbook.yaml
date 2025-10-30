@@ -9,3 +9,10 @@
         name:
           - apache2
           - php
+          - mediawiki
+          - mariadb-server
+          - python3-pymysql
+    - name: Grant all 
+
+
+# grant all on mediawiki.* to 'mediawiki'@'%' identified by 'mediawiki';
