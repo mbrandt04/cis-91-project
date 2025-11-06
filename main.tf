@@ -13,9 +13,34 @@ provider "google" {
     zone    = var.zone
 }
 
+resource "google_service_account" "default" {
+  account_id   = "vm-service-account"
+  display_name = "VM Service Account"
+}
+
 resource "google_compute_network" "vpc_network" {
   name = "terraform-network"
 
+}
+
+resource "google_compute_firewall" "allow_web_ssh" {
+  name    = "terraform-firewall-allow-web-ssh"
+  network = google_compute_network.vpc_network.name
+
+  allow {
+    protocol = "tcp"
+    ports    = ["22", "80", "443"]
+  }
+
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["web"]
+}
+
+resource "google_compute_disk" "persistent_disk" {
+  name = "test-disk-balanced"
+  type = "pd-balanced"
+  zone = var.zone
+  size = 10
 }
 resource "google_compute_instance" "vm_instance" {
   name         = "terraform-instance"
@@ -25,15 +50,24 @@ resource "google_compute_instance" "vm_instance" {
 
   boot_disk {
     initialize_params {
-      # image = "debian-cloud/debian-11"
-      image = "cos-cloud/cos-stable"
+      image = "debian-cloud/debian-12"
     }
+  }
+
+  attached_disk {
+    source = google_compute_disk.persistent_disk.id
+    device_name = "test-disk-balanced"
   }
 
   network_interface {
     network = google_compute_network.vpc_network.name
     access_config {
     }
+  }
+
+  service_account {
+    email  = google_service_account.default.email
+    scopes = ["cloud-platform"]
   }
 }
 

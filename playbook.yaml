@@ -4,6 +4,20 @@
   name: Install Apache and PHP
   become: yes
   tasks:
+    - name: Create a ext4 filesystem on the persistent disk
+      community.general.filesystem:
+        fstype: ext4
+        dev: /dev/disk/by-id/google-test-disk-balanced
+      # force: no (default) ensures we don't reformat on subsequent runs
+
+    - name: Mount the persistent disk to /var/lib/mysql
+      ansible.posix.mount:
+        path: /var/lib/mysql
+        src: /dev/disk/by-id/google-test-disk-balanced
+        fstype: ext4
+        state: mounted
+        opts: discard,defaults
+
     - name: Install packages 
       ansible.builtin.apt:
         update_cache: yes
@@ -14,6 +28,7 @@
           - mediawiki
           - mariadb-server
           - python3-pymysql
+
     - name: Grant all privileges to mediawiki user
       community.mysql.mysql_query:
         login_user: root
